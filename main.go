@@ -3,37 +3,34 @@ package main
 import (
 	"fmt"
 	"net"
-	"io"
-	"os"
 )
 
 func main(){
-	listener, err := net.Listen("tcp", ":6379")
+	fmt.Println("Listening on port :6379")
+
+	l, err := net.Listen("tcp", ":6379")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	connection, err := listener.Accept()
+	conn, err := l.Accept()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	defer connection.Close()
+	defer conn.Close()
 
 	for {
-		buffer := make([]byte, 1024)
-
-		_, err = connection.Read(buffer)
+		resp := NewResp(conn)
+		value, err := resp.Read()
 		if err != nil{
-			if err == io.EOF {
-				break
-			}
-			fmt.Println("error reading from client : ", err.Error())
-			os.Exit(1)
+			fmt.Println(err)
+			return
 		}
+		fmt.Println(value)
 
-		connection.Write([]byte("+OK\r\n"))
+		conn.Write([]byte("+OK\r\n"))
 	}
 }
